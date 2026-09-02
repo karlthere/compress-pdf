@@ -5,18 +5,25 @@ import '../models/pdf_item.dart';
 
 /// Engine Pemroses Kompresi PDF Native Berbasis PyMuPDF & Physical File Sync
 class PdfCompressorService {
-  /// Resolusi Path Script Python compress_engine.py secara absolut & robust
+  /// Resolusi Path Script Python compress_engine.py secara absolut & robust (Debug & Release Bundle)
   static String _resolveEngineScriptPath() {
+    final exeDir = p.dirname(Platform.resolvedExecutable);
+
+    // 1. Path pada Windows Release App Bundle (data/flutter_assets/compress_engine.py)
+    final winAssetPath = p.join(exeDir, 'data', 'flutter_assets', 'compress_engine.py');
+    if (File(winAssetPath).existsSync()) return winAssetPath;
+
+    // 2. Path pada macOS Release App Bundle (../Resources/flutter_assets/compress_engine.py)
+    final macAssetPath = p.canonicalize(p.join(exeDir, '..', 'Resources', 'flutter_assets', 'compress_engine.py'));
+    if (File(macAssetPath).existsSync()) return macAssetPath;
+
+    // 3. Cek di Directory.current (Project Root)
     final candidate1 = p.join(Directory.current.path, 'compress_engine.py');
     if (File(candidate1).existsSync()) return candidate1;
 
-    // Absolute fallback ke lokasi project
+    // 4. Absolute fallback ke lokasi project local
     const candidate2 = r'd:\Coder\Project\compress-pdf\compress_engine.py';
     if (File(candidate2).existsSync()) return candidate2;
-
-    // Relative jika dipanggil dari folder build/windows/x64/runner/Debug
-    final candidate3 = p.canonicalize(p.join(Directory.current.path, '..', '..', '..', '..', 'compress_engine.py'));
-    if (File(candidate3).existsSync()) return candidate3;
 
     return candidate1;
   }
@@ -92,22 +99,31 @@ class PdfCompressorService {
     final scriptPath = _resolveEngineScriptPath();
 
     try {
-      // Coba jalankan dengan 'python' atau 'py'
+      // Coba jalankan dengan 'python3', 'python', atau 'py'
       ProcessResult result;
       try {
-        result = await Process.run('python', [
+        result = await Process.run('python3', [
           scriptPath,
           item.inputPath,
           item.outputPath,
           limitMb.toString(),
         ]);
       } catch (_) {
-        result = await Process.run('py', [
-          scriptPath,
-          item.inputPath,
-          item.outputPath,
-          limitMb.toString(),
-        ]);
+        try {
+          result = await Process.run('python', [
+            scriptPath,
+            item.inputPath,
+            item.outputPath,
+            limitMb.toString(),
+          ]);
+        } catch (_) {
+          result = await Process.run('py', [
+            scriptPath,
+            item.inputPath,
+            item.outputPath,
+            limitMb.toString(),
+          ]);
+        }
       }
 
       if (result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty) {
@@ -138,7 +154,6 @@ class PdfCompressorService {
           return false;
         }
       } else {
-        // Fallback jika terjadi error pada eksekusi python engine
         stderr.writeln('Python Exec Error: ${result.stderr}');
         await File(item.inputPath).copy(item.outputPath);
         final outputFile = File(item.outputPath);

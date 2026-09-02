@@ -1,0 +1,64 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches: [ main, master ] # Jalankan otomatis saat push ke main/master
+  workflow_dispatch: # Memungkinkan tombol 'Run manual' di GitHub Actions
+
+jobs:
+  build-macos:
+    runs-on: macos-latest # Meminjam mesin Mac dari GitHub
+
+    steps:
+      # 1. Ambil kode dari repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # 3. Enable support untuk macOS build
+      - name: Enable macOS Support
+        run: flutter config --enable-macos-desktop
+
+      # 4. Ambil dependency Flutter
+      - name: Install Dependencies
+        run: flutter pub get
+        
+
+      # 5. Build aplikasi macOS (menghasilkan file .app)
+      - name: Build macOS App
+        run: flutter build macos --release
+
+      # 6. Install tool create-dmg di mesin Mac GitHub
+      - name: Install create-dmg tool
+        run: brew install create-dmg
+
+      # 7. Package file .app menjadi file .dmg
+      - name: Create DMG File
+        run: |
+          mkdir -p build/dmg
+          # Cari nama folder .app yang dihasilkan oleh Flutter
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1)
+          APP_NAME=$(basename "$APP_PATH" .app)
+          
+          create-dmg \
+            --volname "$APP_NAME Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME.app" 200 190 \
+            --hide-extension "$APP_NAME.app" \
+            --app-drop-link 600 190 \
+            "build/dmg/$APP_NAME.dmg" \
+            "$APP_PATH"
+
+      # 8. Upload file .dmg agar bisa diunduh
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-DMG-Installer
+          path: build/dmg/*.dmg
