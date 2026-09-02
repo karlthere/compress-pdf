@@ -1,64 +1,44 @@
-# Day 1: Membuat Tools Buat Momi Rere PDF Auto Compressor Speedrun
+# 🚀 PDF Squeezer Desktop (Flutter Native Windows & macOS)
 
-Script Python otomatis untuk mengkompres file PDF massal. Program ini dirancang khusus untuk memangkas ukuran dokumen yang melebihi batas pengunggahan (misal: batas maksimum 2 MB) secara efisien tanpa mengurangi kualitas secara drastis.
+Aplikasi Desktop Native modern berdesain **Apple Minimalist & Bento Box** untuk pengompresan file PDF secara otomatis, menggantikan script Python `index.py`.
 
-\---
+---
 
-##  🛠️ Persyaratan Sistem & Instalasi
+## 💎 Fitur Utama
+1. **Asynchronous 100% Full Scan**: Memindai seluruh berkas dan direktori sub-folder tanpa batas kuota/limit file, tanpa membekukan antarmuka UI.
+2. **Apple Bento Box Grid Layout**: Tampilan visual berbasis Bento Cards dengan efek **Glassmorphic Gloss** (`BackdropFilter` blur + pearl white surface + rounded corners 22px).
+3. **Pilihan Input Fleksibel**:
+   - `[ 📄 Pilih File ]`: Membuka File Explorer / Finder untuk memilih 1 atau banyak file `.pdf` spesifik.
+   - `[ 📁 Pilih Folder ]`: Membuka File Explorer / Finder untuk memilih seluruh struktur direktori folder.
+4. **Skema Warna Modern**: Pure White / Light Pearl Gloss dipadukan dengan aksen **Electric Blue** (`#0066FF`) & **Royal Blue** (`#1E3A8A`).
+5. **Algoritma Multi-Stage Compression**:
+   - File $\le$ 2MB: Disalin langsung otomatis (*Direct Copy*).
+   - File > 2MB: Dikompresi bertahap (Tier 1 Lossless Clean & Tier 2 Raster JPG Optimization).
 
-Pastikan perangkat kamu telah terpasang perangkat lunak berikut sebelum menjalankan script:
+---
 
-**1\. Python 3.x**    
-    Download: \[python.org/downloads\](https://www.python.org/downloads/)    
-    Catatan: Pastikan mencentang opsi "Add python.exe to PATH" pada tahap awal instalasi.
+## 🛠️ Panduan Menjalankan Project
 
-**2\. Visual Studio Code (VS Code) (Direkomendasikan)**    
-    Download: \[code.visualstudio.com\](https://code.visualstudio.com/)    
-    Pasang ekstensi Python melalui tab Extensions (\`Ctrl \+ Shift \+ X\`).
+### Requirements:
+- Flutter SDK `^3.0.0`
+- Windows 10/11 atau macOS
 
-**3\. Library PyMuPDF**    
-   Buka Terminal di VS Code (\`Ctrl \+ \~\`) atau Command Prompt, lalu jalankan perintah:  
-   \`\`\`bash  
-   **pip install pymupdf**
+### Command Jalankan Aplikasi:
+```bash
+# 1. Install Dependencies
+flutter pub get
 
-## ✨ Fitur Utama
+# 2. Jalankan di Windows
+flutter run -d windows
 
-* Filter Ukuran Otomatis: Hanya memproses file PDF yang berukuran di atas 2 MB. File yang sudah berukuran kecil diabaikan untuk menjaga kualitas dokumen tetap optimal.  
-* Pemrosesan Paralel (Multi-Core): Menggunakan ProcessPoolExecutor untuk memproses banyak file secara bersamaan sehingga menghemat waktu.
+# 3. Jalankan di macOS
+flutter run -d macos
+```
 
-
-Kompresi 2 Tahap:
-
-1. Lossless Clean: Membersihkan struktur dan objek PDF yang tidak terpakai tanpa merubah visual.  
-   2. Raster JPG (Fallback): Jika Tahap 1 masih melebihi 2 MB, dokumen akan di-render ulang dengan tingkat DPI dan kualitas gambar yang disesuaikan secara bertahap.  
-   3. Laporan Hasil: Menampilkan ringkasan jumlah file yang diproses, total ukuran sebelum-sesudah, serta efisiensi ruang yang dihemat.
-
-## 🚀 Cara Penggunaan
-
-### 1\. Mode Interaktif
-
-Jalankan script tanpa argumen:
-
-Bash atau terminal  
-**python index.py**
-
-Masukkan path folder atau file PDF saat diminta. Jika langsung menekan Enter, program akan menggunakan TARGET\_PATH default.
-
-### 2\. Mode Argumen CLI
-
-Jalankan script langsung dengan menyertakan path folder/file:
-
-Bash atau terminal  
-**python index.py "C:\\Path\\Ke\\Folder\\PDF"**
-
-## ⚙️ Konfigurasi Default
-
-Lokasi folder default dan batas ukuran file dapat disesuaikan langsung pada variabel di dalam berkas index.py:
-
-Python  
-**TARGET\_PATH \= r"C:\\Users\\Public\\Documents"**   
-**BATAS\_MAKSIMAL\_MB \= 2.0**
-
-Pojok Tanda Tangan  
-Dibuat dengan kasih sayang oleh:  
-✨ karlin cantiq,, istrinya winter ✨
+### Structure Code:
+- [`lib/main.dart`](file:///d:/Coder/Project/compress-pdf/lib/main.dart) - Entry point utama
+- [`lib/models/pdf_item.dart`](file:///d:/Coder/Project/compress-pdf/lib/models/pdf_item.dart) - Data model file PDF
+- [`lib/models/scan_stats.dart`](file:///d:/Coder/Project/compress-pdf/lib/models/scan_stats.dart) - Data model statistik
+- [`lib/services/file_scanner_service.dart`](file:///d:/Coder/Project/compress-pdf/lib/services/file_scanner_service.dart) - Engine pemindai file 100% async
+- [`lib/services/pdf_compressor_service.dart`](file:///d:/Coder/Project/compress-pdf/lib/services/pdf_compressor_service.dart) - Engine pengompres PDF
+- [`lib/ui/views/home_screen.dart`](file:///d:/Coder/Project/compress-pdf/lib/ui/views/home_screen.dart) - Dashboard Bento Box UI
