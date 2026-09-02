@@ -2,25 +2,22 @@ name: Build macOS DMG
 
 on:
   push:
-    branches: [ main, master ] # Jalankan otomatis saat push ke main/master
+    branches: [ main, master ]
     tags:
-      - 'v*' # Otomatis bikin Release saat kamu push tag versi (contoh: v1.0.0)
-  workflow_dispatch: # Memungkinkan tombol 'Run manual' di GitHub Actions UI
+      - 'v*'
+  workflow_dispatch:
 
-# Izin yang diperlukan agar GitHub Actions bisa membuat Release otomatis
 permissions:
   contents: write
 
 jobs:
   build-macos:
-    runs-on: macos-latest # Menggunakan runner macOS terbaru dari GitHub
+    runs-on: macos-latest
 
     steps:
-      # 1. Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup Python & PyMuPDF (Diperlukan oleh engine kompresi PDF)
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -29,31 +26,33 @@ jobs:
       - name: Install Python PyMuPDF
         run: pip install pymupdf
 
-      # 3. Setup Flutter SDK
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # 4. Enable & Generate macOS Desktop Project Files
       - name: Enable & Generate macOS Project
         run: |
           flutter config --enable-macos-desktop
           flutter create --platforms=macos .
 
-      # 5. Install dependency Flutter
       - name: Install Dependencies
         run: flutter pub get
 
-      # 6. Build aplikasi macOS Release (menghasilkan file .app)
       - name: Build macOS App
         run: flutter build macos --release
 
-      # 7. Install tool create-dmg di mesin Mac GitHub
+      # --- STEP BARU YANG DITAMBAHKAN ---
+      - name: Ad-Hoc Sign macOS App
+        run: |
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1)
+          echo "Signing app at: $APP_PATH"
+          codesign --force --deep --sign - "$APP_PATH"
+      # ----------------------------------
+
       - name: Install create-dmg tool
         run: brew install create-dmg
 
-      # 8. Package file .app menjadi file .dmg installer
       - name: Create DMG File
         run: |
           mkdir -p build/dmg
@@ -71,14 +70,12 @@ jobs:
             "build/dmg/$APP_NAME.dmg" \
             "$APP_PATH" || true
 
-      # 9. Upload file .dmg ke GitHub Actions Artifacts (Penyimpanan Sementara)
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macOS-DMG-Installer
           path: build/dmg/*.dmg
 
-      # 10. Unggah file .dmg ke Halaman Releases (Penyimpanan Permanen & Publik)
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
